@@ -50,7 +50,7 @@ instance FromField HighLow where
     parseField "H" = pure High
     parseField _   = fail "unknown HighLow"
 
-readTidePredictions :: FilePath -> IO [(UTCTime, HighLow, Double)]
+readTidePredictions :: FilePath -> IO [(LocalTime, HighLow, Double)]
 readTidePredictions fname = do
     r <- Csv.decode HasHeader <$> BL.readFile fname
     v <- either fail return r
@@ -67,8 +67,7 @@ main = do
     let highTides :: M.Map Day TimeOfDay
         highTides = M.fromListWith min
             [ (localDay lt, localTimeOfDay lt)
-            | (t, High, depth) <- tides
-            , let lt = utcToLocalTime tz t
+            | (lt, High, depth) <- tides
             , localTimeOfDay lt > TimeOfDay 6 0 0
             ]
     let days = [firstDay, 7 `addDays` firstDay..lastDay]

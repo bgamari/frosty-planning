@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               frostie-planning
+name:               frosty-planning
 version:            0.1.0.0
 license:            BSD-3-Clause
 author:             Ben Gamari
@@ -8,7 +8,7 @@ copyright:          (c) 2022 Ben Gamari
 -- category:
 extra-source-files: CHANGELOG.md
 
-executable frostie-planning
+executable frosty-planning
     main-is:          Main.hs
     build-depends:    base ^>=4.15.1.0,
                       time,

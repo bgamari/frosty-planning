@@ -8,8 +8,8 @@ copyright:          (c) 2022 Ben Gamari
 -- category:
 extra-source-files: CHANGELOG.md
 
-executable frosty-planning
-    main-is:          Main.hs
+executable frosty-planning-export
+    main-is:          Export.hs
     build-depends:    base ^>=4.15.1.0,
                       time,
                       solar,

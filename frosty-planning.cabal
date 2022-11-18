@@ -19,3 +19,17 @@ executable frosty-planning-export
                       cassava
     hs-source-dirs:   app
     default-language: Haskell2010
+
+executable races-to-ical
+    main-is:          ToICal.hs
+    other-modules:    ICal
+    build-depends:    base ^>=4.15.1.0,
+                      time,
+                      tz,
+                      solar,
+                      bytestring,
+                      vector,
+                      containers,
+                      cassava
+    hs-source-dirs:   app, src
+    default-language: Haskell2010

@@ -1,6 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveTraversable #-}
 
-module Results where
+module Results
+    ( Sailor, mkSailor
+    , Race(..)
+    , raceFinishers
+    , raceRanks
+    , raceParticipants
+    , racesParticipants
+    , readRace
+    , readRaces
+    , readSeries
+    ) where
 
 import Data.List
 import Data.Tuple
@@ -18,12 +29,22 @@ newtype Sailor = Sailor T.Text
 mkSailor :: T.Text -> Sailor
 mkSailor = Sailor . T.toLower . T.strip
 
-data Race = Race { raceFinishers :: [Sailor]
-                 , raceRCs :: [Sailor]
+newtype Ranking a = Ranking { getRanking :: [a] }
+    deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+
+data Race = Race { raceRanking :: Ranking Sailor
+                 , raceRCs :: S.Set Sailor
                  }
 
+raceFinishers :: Race -> S.Set Sailor
+raceFinishers = S.fromList . getRanking . raceRanking
+
+raceRanks :: Race -> M.Map Sailor Int
+raceRanks race =
+    M.fromList $ zip (getRanking $ raceRanking race) [1..]
+
 raceParticipants :: Race -> S.Set Sailor
-raceParticipants r = S.fromList $ raceFinishers r <> raceRCs r
+raceParticipants r = raceFinishers r <> raceRCs r
 
 racesParticipants :: [Race] -> S.Set Sailor
 racesParticipants = foldMap raceParticipants
@@ -31,8 +52,8 @@ racesParticipants = foldMap raceParticipants
 parseRace :: T.Text -> Race
 parseRace t
   | Just rest <- "RC:" `T.stripPrefix` rcLine
-  = Race { raceRCs = map mkSailor $ T.splitOn "," rest
-         , raceFinishers = map mkSailor $ filter (not . T.null) $ map T.strip ls
+  = Race { raceRCs = S.fromList $ map mkSailor $ T.splitOn "," rest
+         , raceRanking = Ranking $ map mkSailor $ filter (not . T.null) $ map T.strip ls
          }
   | otherwise
   = error "parseRace: invalid"
@@ -41,36 +62,15 @@ parseRace t
 readRace :: FilePath -> IO Race
 readRace fname = parseRace <$> T.readFile fname
 
-newtype Scores = Scores { getScores :: M.Map Sailor Int }
-    deriving (Show)
-
-instance Monoid Scores where
-    mempty = Scores mempty
-
-instance Semigroup Scores where
-    Scores a <> Scores b = Scores (M.unionWith (+) a b)
-
-scoreRace :: S.Set Sailor -> Race -> Scores
-scoreRace allSailors race = Scores scores
-  where
-    n = 1 + length (raceFinishers race)
-    dnfs = allSailors `S.difference` raceParticipants race
-    scores = 
-        M.fromList (zip (raceFinishers race) [1..])
-        <> M.fromList (zip (S.toList dnfs) (repeat n))
-
-readScoreDay :: FilePath -> IO Scores
-readScoreDay dir = do
+-- | Read a directory of race results
+readRaces :: FilePath -> IO [Race]
+readRaces dir = do
     raceFiles <- listDirectory dir
-    races <- mapM (readRace . (dir </>)) raceFiles
-    let allSailors = foldMap raceParticipants races
-    let scores :: [Scores]
-        scores = map (scoreRace allSailors) races
-    return $ fold scores
+    mapM (readRace . (dir </>)) raceFiles
 
-main :: IO ()
-main = do
-    let resultsDir = "results"
-    days <- listDirectory resultsDir
-    races <- mapM (readScoreDay . (resultsDir </>)) days
-    print $ sort $ map swap $ M.toList $ getScores $ fold races
+readSeries :: FilePath -> IO (M.Map String [Race])
+readSeries resultsDir = do
+    dirs <- listDirectory resultsDir
+    fmap M.fromList $ flip mapM dirs $ \dir -> do
+        results <- readRaces (resultsDir </> dir)
+        return (dir, results)

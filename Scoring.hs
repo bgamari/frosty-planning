@@ -1,75 +1,81 @@
+{-# LANGUAGE TypeApplications #-}
+
 module Scoring where
+
+import Data.Foldable
+import Data.Maybe
+import Data.List (sort)
+import Data.Tuple (swap)
+import Data.Coerce
+
+import qualified Data.Map.Strict as M
+import qualified Data.Set as S
 
 import Results
 
-newtype Scores = Scores { getScores :: M.Map Sailor Float }
+newtype Points = Points Float
+    deriving (Show)
+
+instance Monoid Points where
+    mempty = Points 0
+instance Semigroup Points where
+    Points a <> Points b = Points (a+b)
+
+newtype Scores = Scores { getScores :: M.Map Sailor Points }
     deriving (Show)
 
 instance Monoid Scores where
     mempty = Scores mempty
 
 instance Semigroup Scores where
-    Scores a <> Scores b = Scores (M.unionWith (+) a b)
-
-scoreRace :: S.Set Sailor -> Race -> Scores
-scoreRace allSailors race = Scores scores
-  where
-    n = 1 + length (raceFinishers race)
-    dnfs = allSailors `S.difference` raceParticipants race
-    scores = 
-        M.fromList (zip (raceFinishers race) [1..])
-        <> M.fromList (zip (S.toList dnfs) (repeat n))
-
-scoreDay :: FilePath -> IO Scores
-scoreDay dir = do
-    races <- readRaces dir
-    let allSailors = foldMap raceParticipants races
-    let scores :: [Scores]
-        scores = map (scoreRace allSailors) races
-    return $ fold scores
+    Scores a <> Scores b = Scores (M.unionWith (<>) a b)
 
 scoreSeries :: M.Map String [Race] -> Scores
-scoreSeries series = scores
+scoreSeries series = series'
   where
     allSailors = foldMap (foldMap raceParticipants) series
-    series' :: M.Map String [Race] -> Scores
-    series' = fmap scoreDay series
+    series' :: Scores
+    series' = foldMap scoreDay series
       where
         -- Build complete record of race scores, including DNFs and RC duty.
         scoreDay :: [Race] -> Scores
-        scoreDay races = M.fromList
+        scoreDay races = Scores $ M.fromList
             [ (sailor, score)
             | race <- races
-            , sailor <- allSailors
-            , let finishers :: M.Map Sailor Int
-                  finishers = raceRanks race
-            , let score
-                    | Just rank <- M.lookup sailor raceRanks
-                    = rank
+            , sailor <- S.toList allSailors
+            , let ranks :: M.Map Sailor Int
+                  ranks = raceRanks race
+            , let score :: Points
+                  score
+                    | Just rank <- M.lookup sailor ranks
+                    = Points $ realToFrac rank
                     | sailor `elem` raceRCs race
-                    = fromMaybe (error "fixDay") $
-                      M.lookup avgScores sailor
+                    , Just score <- M.lookup sailor avgScores
+                    = score
                     | otherwise
                     = dnfRank
             ]
           where
-            scores :: M.Map Sailor [Int]
-            scores = M.fromList (++)
-                [ (sailor, n)
+            scores :: M.Map Sailor [Points]
+            scores = M.fromListWith (++)
+                [ (sailor, [Points $ realToFrac n])
                 | race <- races
-                , (sailor, n) <- zip (raceFinishers race) [1..]
+                , (sailor, n) <- M.toList $ raceRanks race
                 ]
-            avgScores :: M.Map Sailor Float
-            avgScores = fmap (mean . fmap realToFrac) scores
+            avgScores :: M.Map Sailor Points
+            avgScores = fmap meanPoints scores
 
-            dnfRank = succ $ maximum $ map (length . raceFinishers) races
+            dnfRank :: Points
+            dnfRank = Points $ realToFrac $ succ $ maximum $ map (length . raceFinishers) races
 
-
+meanPoints :: [Points] -> Points
+meanPoints = coerce (mean @Float)
 
 mean :: RealFrac a => [a] -> a
 mean xs = sum xs / realToFrac (length xs)
 
 main :: IO ()
 main = do
-    readSeries
-    print $ sort $ map swap $ M.toList $ getScores $ fold races
+    races <- readSeries "results"
+    print $ races
+    print $ scoreSeries races

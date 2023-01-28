@@ -1,8 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE PatternGuards #-}
 
 module Results
-    ( Sailor, mkSailor
+    ( Sailor
+    , mkSailor
+    , sailorName
+    , Ranking(..)
     , Race(..)
     , raceFinishers
     , raceRanks
@@ -13,6 +18,7 @@ module Results
     , readSeries
     ) where
 
+import Control.Applicative
 import Data.List
 import Data.Tuple
 import Data.Foldable
@@ -23,7 +29,7 @@ import qualified Data.Set as S
 import System.Directory
 import System.FilePath
 
-newtype Sailor = Sailor T.Text
+newtype Sailor = Sailor { sailorName :: T.Text }
     deriving (Eq, Ord, Show)
 
 mkSailor :: T.Text -> Sailor
@@ -31,10 +37,12 @@ mkSailor = Sailor . T.toLower . T.strip
 
 newtype Ranking a = Ranking { getRanking :: [a] }
     deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+    deriving Applicative via ZipList
 
 data Race = Race { raceRanking :: Ranking Sailor
                  , raceRCs :: S.Set Sailor
                  }
+    deriving (Show)
 
 raceFinishers :: Race -> S.Set Sailor
 raceFinishers = S.fromList . getRanking . raceRanking
@@ -53,7 +61,12 @@ parseRace :: T.Text -> Race
 parseRace t
   | Just rest <- "RC:" `T.stripPrefix` rcLine
   = Race { raceRCs = S.fromList $ map mkSailor $ T.splitOn "," rest
-         , raceRanking = Ranking $ map mkSailor $ filter (not . T.null) $ map T.strip ls
+         , raceRanking = Ranking
+            [ mkSailor l
+            | l <- ls
+            , not $ T.null l
+            , not $ "dnf:" `T.isPrefixOf` T.toLower l
+            ]
          }
   | otherwise
   = error "parseRace: invalid"
@@ -66,7 +79,7 @@ readRace fname = parseRace <$> T.readFile fname
 readRaces :: FilePath -> IO [Race]
 readRaces dir = do
     raceFiles <- listDirectory dir
-    mapM (readRace . (dir </>)) raceFiles
+    mapM (readRace . (dir </>)) (sort raceFiles)
 
 readSeries :: FilePath -> IO (M.Map String [Race])
 readSeries resultsDir = do

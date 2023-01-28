@@ -33,3 +33,13 @@ executable races-to-ical
                       cassava
     hs-source-dirs:   app, src
     default-language: Haskell2010
+
+executable results
+    main-is:          Table.hs
+    other-modules:    Results
+    build-depends:    base ^>=4.15.1.0,
+                      containers,
+                      text,
+                      directory,
+                      filepath,
+                      lucid

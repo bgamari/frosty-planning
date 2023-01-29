@@ -1,0 +1,7 @@
+# Frosty Fleet 9 Planning
+
+This repository contains various tools I use for planning the Cape Cod Frosty
+Fleet 9 racing series. Additionally, raw results for the 2022/2023 season can
+be found in the `results/` directory.
+
+See <https://frosty.smart-cactus.org/> for current results.

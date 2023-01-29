@@ -35,7 +35,7 @@ main = do
             p_ $ do
                 "Results for Frosty Fleet 9's " <> season <> " racing season are tabulated below. See "
                 a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub "
-                "for machine-readable data and tabulation scripts."
+                "for machine-readable data, tabulation tools, and a discussion of scoring methodology."
             div_ $ do
                 i_ "Hint: "
                 span_ "Click on a sailor's name to highlight occurrences."

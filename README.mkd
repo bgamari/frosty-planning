@@ -6,6 +6,15 @@ be found in the `results/` directory.
 
 See <https://frosty.smart-cactus.org/> for tabulated results.
 
+## Scoring methodology
+
+Races are scored in typical fashion, with each finisher receiving a score
+corresponding to their rank. Races who do not attend a day of racing receive
+DNF for each race of the day. To avoid disincentivising competitors rotating
+through race committee duties, competitors receive their average score for the
+day for races during which they did not race. A competitor's score over the
+season is the sum of their race scores.
+
 ## Resources
 
 * [Current results](https://frosty.smart-cactus.org/)

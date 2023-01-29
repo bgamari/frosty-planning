@@ -12,3 +12,7 @@ span.sailor {
 .selected {
     background-color: hsl(204, 70%, 75%);
 }
+
+table.race-rankings thead {
+    background-color: hsl(219, 70%, 96%);
+}

@@ -69,9 +69,9 @@ parseRace t
             , not $ "dnf:" `T.isPrefixOf` T.toLower l
             ]
          , raceDNFs = S.fromList
-            [ mkSailor l
+            [ mkSailor name
             | l <- ls
-            , "dnf:" `T.isPrefixOf` T.toLower l
+            , Just name <- pure $ "dnf:" `T.stripPrefix` T.toLower l
             ]
          }
   | otherwise

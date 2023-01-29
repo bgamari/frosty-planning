@@ -48,7 +48,7 @@ header = head_ $ do
 -- | Summarize rankings of a day's races.
 rankingsTable :: M.Map String Race -> Html ()
 rankingsTable races =
-    table_ [classes_ ["table", "is-striped", "is-hoverable", "rankings"]] $ do
+    table_ [classes_ ["table", "is-striped", "is-hoverable", "race-rankings"]] $ do
         thead_ $ do
             tr_ $ mapM_ (th_ . toHtml) $ ["Position"] ++ M.keys races
             tr_ $ do
@@ -85,7 +85,7 @@ instance ToHtml Points where
 scoreSummaryTable :: M.Map String [Race]
                   -> Html ()
 scoreSummaryTable series =
-    table_ [classes_ ["table", "is-striped", "is-hoverable", "rankings"]] $ do
+    table_ [classes_ ["table", "is-striped", "is-hoverable", "score-summary"]] $ do
         thead_ $ do
             tr_ $ mapM_ (th_ . toHtml) $ ["Day", "# Races", "Attendence"] ++ map sailor allSailors
         tbody_ $ do

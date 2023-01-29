@@ -21,7 +21,7 @@ main = do
         header
         body_ $ do
             h1_ [class_ "title"] "Score Summary"
-            dayScoreTable (scoreSeries series)
+            dayScoreTable series
 
             h1_ [class_ "title"] "Per-race results"
             mconcat
@@ -78,30 +78,46 @@ instance ToHtml Points where
     toHtmlRaw = toHtml
 
 -- | Summary of sailors' per-day scores.
-dayScoreTable :: M.Map String [M.Map Sailor Points]
+dayScoreTable :: M.Map String [Race]
               -> Html ()
-dayScoreTable results =
+dayScoreTable series =
     table_ [classes_ ["table", "is-striped", "is-hoverable", "rankings"]] $ do
         thead_ $ do
-            tr_ $ mapM_ (th_ . toHtml) $ ["Day"] ++ map sailor allSailors
+            tr_ $ mapM_ (th_ . toHtml) $ ["Day", "# Races", "Attendence"] ++ map sailor allSailors
         tbody_ $ do
-            forM_ (M.toList results) $ \(day, points) -> tr_ $ do
+            forM_ (M.toList scored) $ \(day, (races, points)) -> tr_ $ do
                 th_ $ toHtml day
-                let dayPoints = M.unionsWith (<>) points
+                let dayPoints :: M.Map Sailor Points
+                    dayPoints = M.unionsWith (<>) points
+                    attendees :: S.Set Sailor
+                    attendees = foldMap raceFinishers races
+                td_ $ toHtml $ show $ length races
+                td_ $ toHtml $ show $ S.size attendees
                 mconcat
-                    [ td_ $ toHtml $ fromJust $ M.lookup sailor dayPoints
+                    [ td_ [classes_ classes]
+                      $ toHtml $ fromJust $ M.lookup sailor dayPoints
                     | sailor <- allSailors
+                    , let present :: Bool
+                          present = sailor `S.member` attendees
+                          classes
+                            | not present = ["has-text-grey-light"]
+                            | otherwise = []
                     ]
             tfoot_ $ tr_ $ do
                 th_ "total"
+                td_ $ toHtml $ show $ sum $ fmap length series
+                td_ ""
                 sequenceA_
                     [ td_ $ toHtml $ totals M.! sailor
                     | sailor <- allSailors
                     ]
 
   where
+    scored :: M.Map String ([Race], [M.Map Sailor Points])
+    scored = M.intersectionWith (,) series (scoreSeries series)
+
     allSailors :: [Sailor]
     allSailors = map fst $ sortBy (comparing snd) $ M.toList totals
 
     totals :: M.Map Sailor Points
-    totals = M.unionsWith (<>) $ concat $ M.elems results
+    totals = M.unionsWith (<>) $ concat $ map snd $ M.elems scored

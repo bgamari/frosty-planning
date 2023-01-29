@@ -31,7 +31,7 @@ main = do
             h2_ [classes_ ["subtitle", "is-2"]] "2022/2023 Season"
 
             p_ $ do
-                "Results for Frosty Fleet 9's 2022/2023 season are tabulated below. See "
+                "Results for Frosty Fleet 9's 2022/2023 racing season are tabulated below. See "
                 a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub "
                 "for machine-readable data and tabulation scripts."
             div_ $ do

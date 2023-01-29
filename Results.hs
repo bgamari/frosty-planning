@@ -41,6 +41,7 @@ newtype Ranking a = Ranking { getRanking :: [a] }
 
 data Race = Race { raceRanking :: Ranking Sailor
                  , raceRCs :: S.Set Sailor
+                 , raceDNFs :: S.Set Sailor
                  }
     deriving (Show)
 
@@ -52,7 +53,7 @@ raceRanks race =
     M.fromList $ zip (getRanking $ raceRanking race) [1..]
 
 raceParticipants :: Race -> S.Set Sailor
-raceParticipants r = raceFinishers r <> raceRCs r
+raceParticipants r = raceFinishers r <> raceRCs r <> raceDNFs r
 
 racesParticipants :: [Race] -> S.Set Sailor
 racesParticipants = foldMap raceParticipants
@@ -66,6 +67,11 @@ parseRace t
             | l <- ls
             , not $ T.null l
             , not $ "dnf:" `T.isPrefixOf` T.toLower l
+            ]
+         , raceDNFs = S.fromList
+            [ mkSailor l
+            | l <- ls
+            , "dnf:" `T.isPrefixOf` T.toLower l
             ]
          }
   | otherwise

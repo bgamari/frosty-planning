@@ -24,12 +24,12 @@ main = do
     renderToFile "scores.html" $ doctypehtml_ $ do
         header
         body_ $ do
-            h1_ [class_ "title"] "Score Summary"
+            h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
             scoreSummaryTable series
 
-            h1_ [class_ "title"] "Per-race results"
+            h2_ [classes_ ["subtitle", "is-2"]] "Per-race results"
             mconcat
-                [ do h2_ [id_ (dayAnchor day), class_ "subtitle"] $ toHtml day
+                [ do h3_ [id_ (dayAnchor day), classes_ ["subtitle", "is-3"]] $ toHtml day
                      rankingsTable
                         $ M.fromList
                           [ ("Race " ++ show i, race)

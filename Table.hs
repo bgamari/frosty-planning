@@ -21,6 +21,8 @@ dayAnchor day = "day-" <> T.pack day
 empty :: Html ()
 empty = return ()
 
+season = "2022/2023"
+
 main :: IO ()
 main = do
     series <- readSeries "results"
@@ -28,10 +30,10 @@ main = do
         header
         body_ $ do
             h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
-            h2_ [classes_ ["subtitle", "is-2"]] "2022/2023 Season"
+            h2_ [classes_ ["subtitle", "is-2"]] $ season <> " Season"
 
             p_ $ do
-                "Results for Frosty Fleet 9's 2022/2023 racing season are tabulated below. See "
+                "Results for Frosty Fleet 9's " <> season <> " racing season are tabulated below. See "
                 a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub "
                 "for machine-readable data and tabulation scripts."
             div_ $ do
@@ -54,6 +56,7 @@ main = do
 
 header :: Html ()
 header = head_ $ do
+    title_ $ "Frosty Fleet 9 Results " <> season
     link_ [rel_ "stylesheet", href_ "rankings.css"]
     link_ [rel_ "stylesheet", href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"]
     script_ [src_ "rankings.js"] empty

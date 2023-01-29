@@ -11,8 +11,12 @@ import Data.List (intersperse, sortBy)
 import Data.Ord (comparing)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import qualified Data.Text as T
 import Data.Foldable
 import Data.Maybe
+
+dayAnchor :: String -> T.Text
+dayAnchor day = "day-" <> T.pack day
 
 main :: IO ()
 main = do
@@ -21,11 +25,11 @@ main = do
         header
         body_ $ do
             h1_ [class_ "title"] "Score Summary"
-            dayScoreTable series
+            scoreSummaryTable series
 
             h1_ [class_ "title"] "Per-race results"
             mconcat
-                [ do h2_ [class_ "subtitle"] $ toHtml day
+                [ do h2_ [id_ (dayAnchor day), class_ "subtitle"] $ toHtml day
                      rankingsTable
                         $ M.fromList
                           [ ("Race " ++ show i, race)
@@ -54,7 +58,7 @@ rankingsTable races =
         let mkRow :: Int -> [Maybe Sailor] -> Html ()
             mkRow rank sailors = do
                 th_ $ toHtml $ show rank
-                mapM_ (maybe (return ()) (td_  . sailor)) sailors
+                mapM_ (maybe (td_ $ return ()) (td_  . sailor)) sailors
         tbody_
             $ mapM_ tr_
             $ zipWith mkRow [1..]
@@ -78,15 +82,15 @@ instance ToHtml Points where
     toHtmlRaw = toHtml
 
 -- | Summary of sailors' per-day scores.
-dayScoreTable :: M.Map String [Race]
-              -> Html ()
-dayScoreTable series =
+scoreSummaryTable :: M.Map String [Race]
+                  -> Html ()
+scoreSummaryTable series =
     table_ [classes_ ["table", "is-striped", "is-hoverable", "rankings"]] $ do
         thead_ $ do
             tr_ $ mapM_ (th_ . toHtml) $ ["Day", "# Races", "Attendence"] ++ map sailor allSailors
         tbody_ $ do
             forM_ (M.toList scored) $ \(day, (races, points)) -> tr_ $ do
-                th_ $ toHtml day
+                th_ $ a_ [href_ ("#" <> dayAnchor day)] $ toHtml day
                 let dayPoints :: M.Map Sailor Points
                     dayPoints = M.unionsWith (<>) points
                     attendees :: S.Set Sailor
@@ -121,3 +125,4 @@ dayScoreTable series =
 
     totals :: M.Map Sailor Points
     totals = M.unionsWith (<>) $ concat $ map snd $ M.elems scored
+

@@ -36,7 +36,7 @@ executable races-to-ical
 
 executable results
     main-is:          Table.hs
-    other-modules:    Results
+    other-modules:    Results, Scoring
     build-depends:    base ^>=4.15.1.0,
                       containers,
                       text,

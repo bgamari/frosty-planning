@@ -18,6 +18,9 @@ import Data.Maybe
 dayAnchor :: String -> T.Text
 dayAnchor day = "day-" <> T.pack day
 
+empty :: Html ()
+empty = return ()
+
 main :: IO ()
 main = do
     series <- readSeries "results"
@@ -25,9 +28,19 @@ main = do
         header
         body_ $ do
             h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
+            h2_ [classes_ ["subtitle", "is-2"]] "2022/2023 Season"
+
+            p_ $ do
+                "Results for Frosty Fleet 9's 2022/2023 season are tabulated below. See "
+                a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub "
+                "for machine-readable data and tabulation scripts."
+            div_ $ do
+                i_ "Hint: "
+                span_ "Click on a sailor's name to highlight occurrences."
+            div_ [classes_ ["mb-4"]] empty
             scoreSummaryTable series
 
-            h2_ [classes_ ["subtitle", "is-2"]] "Per-race results"
+            h2_ [classes_ ["subtitle", "is-2"]] "Results by Race Day"
             mconcat
                 [ do h3_ [id_ (dayAnchor day), classes_ ["subtitle", "is-3"]] $ toHtml day
                      rankingsTable
@@ -43,7 +56,7 @@ header :: Html ()
 header = head_ $ do
     link_ [rel_ "stylesheet", href_ "rankings.css"]
     link_ [rel_ "stylesheet", href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"]
-    script_ [src_ "rankings.js"] (return () :: Html ())
+    script_ [src_ "rankings.js"] empty
 
 -- | Summarize rankings of a day's races.
 rankingsTable :: M.Map String Race -> Html ()
@@ -58,7 +71,7 @@ rankingsTable races =
         let mkRow :: Int -> [Maybe Sailor] -> Html ()
             mkRow rank sailors = do
                 th_ $ toHtml $ show rank
-                mapM_ (maybe (td_ $ return ()) (td_  . sailor)) sailors
+                mapM_ (maybe (td_ empty) (td_  . sailor)) sailors
         tbody_
             $ mapM_ tr_
             $ zipWith mkRow [1..]

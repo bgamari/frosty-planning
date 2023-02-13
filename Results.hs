@@ -1,6 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE PatternGuards #-}
 
 module Results
@@ -19,6 +23,8 @@ module Results
     ) where
 
 import Control.Applicative
+import Control.Exception
+import Control.DeepSeq
 import Data.List
 import Data.Tuple
 import Data.Foldable
@@ -28,22 +34,29 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import System.Directory
 import System.FilePath
+import GHC.Stack
+import GHC.Generics
 
 newtype Sailor = Sailor { sailorName :: T.Text }
     deriving (Eq, Ord, Show)
+    deriving newtype (NFData)
 
-mkSailor :: T.Text -> Sailor
-mkSailor = Sailor . T.toLower . T.strip
+mkSailor :: HasCallStack => T.Text -> Sailor
+mkSailor name
+  | T.null name' = error "null sailor name"
+  | otherwise    =  Sailor name'
+  where name' = T.toLower $ T.strip name
 
 newtype Ranking a = Ranking { getRanking :: [a] }
-    deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+    deriving (Eq, Ord, Show, Functor, Foldable, Traversable, Generic)
+    deriving newtype (NFData)
     deriving Applicative via ZipList
 
 data Race = Race { raceRanking :: Ranking Sailor
                  , raceRCs :: S.Set Sailor
                  , raceDNFs :: S.Set Sailor
                  }
-    deriving (Show)
+    deriving (Show, Generic, NFData)
 
 raceFinishers :: Race -> S.Set Sailor
 raceFinishers = S.fromList . getRanking . raceRanking
@@ -71,6 +84,7 @@ parseRace t
          , raceDNFs = S.fromList
             [ mkSailor name
             | l <- ls
+            , not $ T.null l
             , Just name <- pure $ "dnf:" `T.stripPrefix` T.toLower l
             ]
          }
@@ -78,8 +92,21 @@ parseRace t
   = error "parseRace: invalid"
   where rcLine:ls = T.lines t
 
+data RaceParseError = RaceParseError { rpeException :: SomeException
+                                     , rpeFile     :: FilePath
+                                     }
+    deriving (Show)
+
+instance Exception RaceParseError
+
 readRace :: FilePath -> IO Race
-readRace fname = parseRace <$> T.readFile fname
+readRace fname = handle onError $ do
+    r <- parseRace <$> T.readFile fname
+    return $! force r
+  where
+    onError e@(SomeException _) = do
+        putStrLn $ "error parsing " ++ fname ++ ": " ++ show e
+        throwIO $ RaceParseError e fname
 
 -- | Read a directory of race results
 readRaces :: FilePath -> IO [Race]

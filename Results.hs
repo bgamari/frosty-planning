@@ -74,7 +74,9 @@ racesParticipants = foldMap raceParticipants
 parseRace :: T.Text -> Race
 parseRace t
   | Just rest <- "RC:" `T.stripPrefix` rcLine
-  = Race { raceRCs = S.fromList $ map mkSailor $ T.splitOn "," rest
+  = Race { raceRCs = S.fromList $ map mkSailor
+                     $ filter (not . T.null)
+                     $ T.splitOn "," $ T.strip rest
          , raceRanking = Ranking
             [ mkSailor l
             | l <- ls

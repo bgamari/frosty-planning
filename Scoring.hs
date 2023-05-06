@@ -3,6 +3,8 @@
 
 module Scoring
     ( Points(..)
+    , DroppedOut(..)
+    , getScored
     , scoreSeries
     ) where
 
@@ -15,6 +17,10 @@ import Data.Coerce
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 
+import Control.Monad.Trans.State
+
+import MultiSet
+import qualified MultiSet as MS
 import Results
 
 newtype Points = Points Float
@@ -25,14 +31,14 @@ instance Monoid Points where
 instance Semigroup Points where
     Points a <> Points b = Points (a+b)
 
-scoreSeries :: M.Map String [Race]
-            -> M.Map String [M.Map Sailor Points]
+scoreSeries :: M.Map String Races
+            -> M.Map String [M.Map Sailor (DroppedOut Points)]
 scoreSeries series = fmap scoreDay series
   where
-    allSailors = foldMap (foldMap raceParticipants) series
+    allSailors = foldMap (foldMap raceParticipants . races) series
     -- Build complete record of race scores, including DNFs and RC duty.
-    scoreDay :: [Race] -> [M.Map Sailor Points]
-    scoreDay races = fmap scoreRace races
+    scoreDay :: Races -> [M.Map Sailor (DroppedOut Points)]
+    scoreDay rs = computeDropouts (dropouts rs) $ fmap scoreRace (races rs)
       where
         scoreRace :: Race -> M.Map Sailor Points
         scoreRace race = M.fromList
@@ -53,7 +59,7 @@ scoreSeries series = fmap scoreDay series
         scores :: M.Map Sailor [Points]
         scores = M.fromListWith (++)
             [ (sailor, [Points $ realToFrac n])
-            | race <- races
+            | race <- races rs
             , (sailor, n) <- M.toList $ raceRanks race
             ]
 
@@ -61,7 +67,44 @@ scoreSeries series = fmap scoreDay series
         avgScores = fmap meanPoints scores
 
         dnfRank :: Points
-        dnfRank = Points $ realToFrac $ succ $ maximum $ map (length . raceFinishers) races
+        dnfRank = Points $ realToFrac $ succ $ maximum $ map (length . raceFinishers) (races rs)
+
+computeDropouts :: Int -> [M.Map Sailor Points] -> [M.Map Sailor (DroppedOut Points)]
+computeDropouts nDropouts results =
+    evalState (traverse (M.traverseWithKey dropoutRace) results) sailorDropouts
+  where
+    sailorScores :: M.Map Sailor (MultiSet Points)
+    sailorScores = M.fromListWith (<>)
+        [ (sailor, MultiSet.singleton pts)
+        | race <- results
+        , (sailor, pts) <- M.toList race
+        ]
+
+    sailorDropouts :: M.Map Sailor (MultiSet Points)
+    sailorDropouts = fmap (MultiSet.fromList . take nDropouts . reverse . sort . MultiSet.toList) sailorScores
+
+    dropoutRace
+        :: Sailor -> Points
+        -> State (M.Map Sailor (MultiSet Points)) (DroppedOut Points)
+    dropoutRace sailor points = do
+        dropoutsEnv <- get
+        let dropouts :: MultiSet Points
+            Just dropouts = M.lookup sailor dropoutsEnv
+        case MultiSet.delete points dropouts of
+          Just ms -> do
+              put $ M.insert sailor ms dropoutsEnv
+              return $ DroppedOut points
+          Nothing -> return $ Scored points
+
+data DroppedOut a = Scored a | DroppedOut a
+    deriving (Show)
+
+getScored :: DroppedOut Points -> Points
+getScored = getScored' (Points 0)
+
+getScored' :: a -> DroppedOut a -> a
+getScored' z (DroppedOut _) = z
+getScored' _ (Scored s) = s
 
 meanPoints :: [Points] -> Points
 meanPoints = coerce (mean @Float)
@@ -71,6 +114,6 @@ mean xs = sum xs / realToFrac (length xs)
 
 main :: IO ()
 main = do
-    races <- readSeries "results"
-    print $ races
-    print $ scoreSeries races
+    series <- readSeries "results"
+    print series
+    print $ scoreSeries series

@@ -13,6 +13,7 @@ module Results
     , sailorName
     , Ranking(..)
     , Race(..)
+    , Races(..)
     , raceFinishers
     , raceRanks
     , raceParticipants
@@ -110,13 +111,30 @@ readRace fname = handle onError $ do
         putStrLn $ "error parsing " ++ fname ++ ": " ++ show e
         throwIO $ RaceParseError e fname
 
+readDropouts :: FilePath -> IO Int
+readDropouts dir = do
+    exists <- doesFileExist file
+    if exists
+      then read <$> readFile file
+      else return 0
+  where
+    file = dir </> "dropouts"
+
+-- | A set of races.
+data Races = Races { races :: [Race]
+                   , dropouts :: Int
+                   }
+    deriving (Show)
+
 -- | Read a directory of race results
-readRaces :: FilePath -> IO [Race]
+readRaces :: FilePath -> IO Races
 readRaces dir = do
     raceFiles <- listDirectory dir
-    mapM (readRace . (dir </>)) (sort raceFiles)
+    dropouts <- readDropouts dir
+    races <- mapM (readRace . (dir </>)) $ filter (/= "dropouts") (sort raceFiles)
+    return $ Races races dropouts
 
-readSeries :: FilePath -> IO (M.Map String [Race])
+readSeries :: FilePath -> IO (M.Map String Races)
 readSeries resultsDir = do
     dirs <- listDirectory resultsDir
     fmap M.fromList $ flip mapM dirs $ \dir -> do

@@ -36,10 +36,11 @@ executable races-to-ical
 
 executable results
     main-is:          Table.hs
-    other-modules:    Results, Scoring
+    other-modules:    Results, Scoring, MultiSet
     build-depends:    base ^>=4.15.1.0,
                       containers,
                       text,
+                      transformers,
                       deepseq,
                       directory,
                       filepath,

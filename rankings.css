@@ -20,3 +20,11 @@ table.race-rankings thead {
 .dropout {
     background-color: hsl(10,70%,90%);
 }
+
+.header-link {
+    font-size: small;
+    font-weight: normal;
+    vertical-align: baseline;
+    margin-left: 1em;
+}
+

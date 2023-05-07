@@ -37,7 +37,7 @@ main = do
         header
         body_ $ do
             h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
-            h2_ [classes_ ["subtitle", "is-2"]] $ season <> " Season"
+            h2_ [classes_ ["subtitle", "is-2"], id_ "top"] $ season <> " Season"
 
             p_ $ do
                 "Results for Frosty Fleet 9's " <> season <> " racing season are tabulated below. See "
@@ -51,7 +51,9 @@ main = do
 
             h2_ [classes_ ["subtitle", "is-2"]] "Results by Race Day"
             mconcat
-                [ do h3_ [id_ (dayAnchor day), classes_ ["subtitle", "is-3"]] $ toHtml day
+                [ do h3_ [id_ (dayAnchor day), classes_ ["subtitle", "is-3"]] $ do
+                         span_ $ toHtml day
+                         span_ [classes_ ["header-link"]] $ "[" <> a_ [href_ "#top"] "return to top" <> "]"
                      let participants = racesParticipants $ races rs
                      div_ $ do
                          toHtml $ show $ S.size participants

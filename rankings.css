@@ -16,3 +16,7 @@ span.sailor {
 table.race-rankings thead {
     background-color: hsl(219, 70%, 96%);
 }
+
+.dropout {
+    background-color: hsl(10,70%,90%);
+}

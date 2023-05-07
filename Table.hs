@@ -7,7 +7,9 @@ import Lucid
 import Results
 import Scoring
 
-import Data.List (intersperse, sortBy)
+import Control.Monad
+import Data.List (intersperse, sort, sortBy)
+import Data.Tuple (swap)
 import Data.Ord (comparing)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
@@ -23,9 +25,14 @@ empty = return ()
 
 season = "2022/2023"
 
+type ScoredRaces = M.Map String (Races, [M.Map Sailor (DroppedOut Points)])
+
 main :: IO ()
 main = do
     series <- readSeries "results"
+    let scored :: ScoredRaces
+        scored = M.intersectionWith (,) series (scoreSeries series)
+
     renderToFile "scores.html" $ doctypehtml_ $ do
         header
         body_ $ do
@@ -40,19 +47,31 @@ main = do
                 i_ "Hint: "
                 span_ "Click on a sailor's name to highlight occurrences."
             div_ [classes_ ["mb-4"]] empty
-            scoreSummaryTable series
+            scoreSummaryTable scored
 
             h2_ [classes_ ["subtitle", "is-2"]] "Results by Race Day"
             mconcat
                 [ do h3_ [id_ (dayAnchor day), classes_ ["subtitle", "is-3"]] $ toHtml day
+                     h4_ [classes_ ["subtitle", "is-4"]] "By position"
                      rankingsTable
                         $ M.fromList
                           [ ("Race " ++ show i, race)
                           | i <- [1..]
                           | race <- races rs
                           ]
-                | (day, rs) <- M.toList series
+
+                     h4_ [classes_ ["subtitle", "is-4"]] "By sailor"
+                     when (any (any isDroppedOut) scores) $ div_ $ do
+                         i_ "Hint: "
+                         span_ [classes_ ["dropout"], style_ "padding: 0.2em; border-radius: 0.5em;"] "Red highlighting"
+                         " denotes dropped-out score"
+                     dayRankingsTable scores
+                | (day, (rs, scores)) <- M.toList scored
                 ]
+
+isDroppedOut :: DroppedOut a -> Bool
+isDroppedOut (DroppedOut _) = True
+isDroppedOut (Scored _) = False
 
 header :: Html ()
 header = head_ $ do
@@ -61,7 +80,7 @@ header = head_ $ do
     link_ [rel_ "stylesheet", href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"]
     script_ [src_ "rankings.js"] empty
 
--- | Summarize rankings of a day's races.
+-- | Summarize a particular day of races by position.
 rankingsTable :: M.Map String Race -> Html ()
 rankingsTable races =
     table_ [classes_ ["table", "is-striped", "is-hoverable", "race-rankings"]] $ do
@@ -81,6 +100,36 @@ rankingsTable races =
             $ getRanking $ racesRankings
             $ M.elems races
 
+-- | Summarize a particular day of races by sailor.
+dayRankingsTable :: [M.Map Sailor (DroppedOut Points)] -> Html ()
+dayRankingsTable scores = 
+    table_ [classes_ ["table", "is-striped", "is-hoverable", "day-rankings"]] $ do
+        thead_ $ tr_ $ do
+            th_ "Sailor"
+            th_ "Total"
+            sequence_ [th_ $ toHtml $ "Race " ++ show i | (i,_) <- zip [1..] scores]
+        tbody_ $ do
+            mapM_ sailorRow ranking
+  where
+    totals :: M.Map Sailor Points
+    totals = totalScore scores
+
+    ranking :: [Sailor]
+    ranking = map snd $ sort $ map swap $ M.toList totals
+
+    sailorRow :: Sailor -> Html ()
+    sailorRow s = tr_ $ do
+        td_ $ sailor s
+        td_ [classes_ []] $ toHtml $ totals M.! s
+        sequence_
+            [ case M.lookup s race of
+                Just (DroppedOut s) -> td_ [classes_ ["dropout"]] $ toHtml s
+                Just (Scored s)     -> td_ $ toHtml s
+                Nothing             -> td_ "dnf"
+            | race <- scores
+            ]
+
+
 racesRankings :: [Race] -> Ranking [Maybe Sailor]
 racesRankings = 
     truncate . sequenceA . map (pad . raceRanking)
@@ -98,9 +147,9 @@ instance ToHtml Points where
     toHtmlRaw = toHtml
 
 -- | Summary of sailors' per-day scores.
-scoreSummaryTable :: M.Map String Races
+scoreSummaryTable :: ScoredRaces
                   -> Html ()
-scoreSummaryTable series =
+scoreSummaryTable scored =
     table_ [classes_ ["table", "is-striped", "is-hoverable", "score-summary"]] $ do
         thead_ $ do
             tr_ $ mapM_ (th_ . toHtml) $ ["Day", "# Races", "Attendence"] ++ map sailor allSailors
@@ -125,7 +174,7 @@ scoreSummaryTable series =
                     ]
             tfoot_ $ tr_ $ do
                 th_ "total"
-                td_ $ toHtml $ show $ sum $ fmap (length . races) series
+                td_ $ toHtml $ show $ sum $ fmap (length . races . fst) scored
                 td_ ""
                 sequenceA_
                     [ td_ $ toHtml $ totals M.! sailor
@@ -133,9 +182,6 @@ scoreSummaryTable series =
                     ]
 
   where
-    scored :: M.Map String (Races, [M.Map Sailor (DroppedOut Points)])
-    scored = M.intersectionWith (,) series (scoreSeries series)
-
     allSailors :: [Sailor]
     allSailors = map fst $ sortBy (comparing snd) $ M.toList totals
 
@@ -145,4 +191,11 @@ scoreSummaryTable series =
         $ concat
         $ map snd
         $ M.elems scored
+
+totalScore :: [M.Map Sailor (DroppedOut Points)] -> M.Map Sailor Points
+totalScore races = M.fromListWith (<>)
+    [ (sailor, getScored pts)
+    | race <- races
+    , (sailor, pts) <- M.toList race
+    ]
 

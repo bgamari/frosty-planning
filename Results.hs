@@ -4,7 +4,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE PatternGuards #-}
 
 module Results
@@ -111,17 +111,21 @@ readRace fname = handle onError $ do
         putStrLn $ "error parsing " ++ fname ++ ": " ++ show e
         throwIO $ RaceParseError e fname
 
+readIfExists :: FilePath -> IO (Maybe String)
+readIfExists fname = do
+    exists <- doesFileExist fname
+    if exists
+      then Just <$> readFile fname
+      else return Nothing
+
 readDropouts :: FilePath -> IO Int
 readDropouts dir = do
-    exists <- doesFileExist file
-    if exists
-      then read <$> readFile file
-      else return 0
-  where
-    file = dir </> "dropouts"
+    maybe 0 read <$> readIfExists file
+  where file = dir </> "dropouts"
 
 -- | A set of races.
 data Races = Races { races :: [Race]
+                   , notes :: String
                    , dropouts :: Int
                    }
     deriving (Show)
@@ -131,8 +135,12 @@ readRaces :: FilePath -> IO Races
 readRaces dir = do
     raceFiles <- listDirectory dir
     dropouts <- readDropouts dir
-    races <- mapM (readRace . (dir </>)) $ filter (/= "dropouts") (sort raceFiles)
-    return $ Races races dropouts
+    notes <- maybe "" id <$> readIfExists (dir </> "notes")
+    races <- mapM (readRace . (dir </>))
+        $ filter (`notElem` specialFiles) (sort raceFiles)
+    return $ Races { notes, races, dropouts }
+  where
+    specialFiles = ["dropouts", "notes"]
 
 readSeries :: FilePath -> IO (M.Map String Races)
 readSeries resultsDir = do

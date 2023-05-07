@@ -15,6 +15,9 @@ through race committee duties, competitors receive their average score for the
 day for races during which they did not race. A competitor's score over the
 season is the sum of their race scores.
 
+Some days are scored with one or more drop-out races. In this case the competitor's
+$k$ worst-scoring races do not contribute to the day's score.
+
 ## Resources
 
 * [Current results](https://frosty.smart-cactus.org/)

@@ -176,7 +176,7 @@ scoreSummaryTable scored =
                 td_ $ toHtml $ show $ S.size attendees
                 mconcat
                     [ td_ [classes_ classes]
-                      $ toHtml $ fromJust $ M.lookup sailor dayPoints
+                      $ toHtml $ fromMaybe (error $ show sailor) $ M.lookup sailor dayPoints
                     | sailor <- allSailors
                     , let present :: Bool
                           present = sailor `S.member` attendees

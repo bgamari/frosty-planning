@@ -52,6 +52,11 @@ main = do
             h2_ [classes_ ["subtitle", "is-2"]] "Results by Race Day"
             mconcat
                 [ do h3_ [id_ (dayAnchor day), classes_ ["subtitle", "is-3"]] $ toHtml day
+                     let participants = racesParticipants $ races rs
+                     div_ $ do
+                         toHtml $ show $ S.size participants
+                         " sailors participated this day."
+
                      h4_ [classes_ ["subtitle", "is-4"]] "By position"
                      rankingsTable
                         $ M.fromList
@@ -65,7 +70,7 @@ main = do
                          i_ "Hint: "
                          span_ [classes_ ["dropout"], style_ "padding: 0.2em; border-radius: 0.5em;"] "Red highlighting"
                          " denotes dropped-out score"
-                     dayRankingsTable scores
+                     dayRankingsTable participants scores
                 | (day, (rs, scores)) <- M.toList scored
                 ]
 
@@ -101,8 +106,8 @@ rankingsTable races =
             $ M.elems races
 
 -- | Summarize a particular day of races by sailor.
-dayRankingsTable :: [M.Map Sailor (DroppedOut Points)] -> Html ()
-dayRankingsTable scores = 
+dayRankingsTable :: S.Set Sailor -> [M.Map Sailor (DroppedOut Points)] -> Html ()
+dayRankingsTable participants scores =
     table_ [classes_ ["table", "is-striped", "is-hoverable", "day-rankings"]] $ do
         thead_ $ tr_ $ do
             th_ "Sailor"
@@ -112,7 +117,7 @@ dayRankingsTable scores =
             mapM_ sailorRow ranking
   where
     totals :: M.Map Sailor Points
-    totals = totalScore scores
+    totals = totalScore scores `M.restrictKeys` participants
 
     ranking :: [Sailor]
     ranking = map snd $ sort $ map swap $ M.toList totals

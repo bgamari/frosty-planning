@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Scoring
     ( Points(..)
@@ -13,6 +14,7 @@ import Data.Maybe
 import Data.List (sort)
 import Data.Tuple (swap)
 import Data.Coerce
+import Data.Bifunctor
 
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
@@ -98,6 +100,16 @@ computeDropouts nDropouts results =
 
 data DroppedOut a = Scored a | DroppedOut a
     deriving (Show)
+
+testComputeDropouts :: IO ()
+testComputeDropouts = print $ computeDropouts dropouts scores
+  where
+    dropouts = 1
+    scores = map (M.fromList . map (bimap mkSailor Points))
+        [ [ ("bob", 1), ("joe", 2), ("frd", 3) ]
+        , [ ("bob", 1), ("joe", 3), ("frd", 2) ]
+        , [ ("bob", 1), ("joe", 3), ("frd", 2) ]
+        ]
 
 getScored :: DroppedOut Points -> Points
 getScored = getScored' (Points 0)

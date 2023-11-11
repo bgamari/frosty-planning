@@ -10,7 +10,7 @@ extra-source-files: CHANGELOG.md
 
 executable frosty-planning-export
     main-is:          Export.hs
-    build-depends:    base ^>=4.15.1.0,
+    build-depends:    base >=4.15 && <4.20,
                       time,
                       solar,
                       bytestring,
@@ -23,7 +23,7 @@ executable frosty-planning-export
 executable races-to-ical
     main-is:          ToICal.hs
     other-modules:    ICal
-    build-depends:    base ^>=4.15.1.0,
+    build-depends:    base,
                       time,
                       tz,
                       solar,
@@ -37,7 +37,7 @@ executable races-to-ical
 executable results
     main-is:          Table.hs
     other-modules:    Results, Scoring, MultiSet
-    build-depends:    base ^>=4.15.1.0,
+    build-depends:    base,
                       containers,
                       text,
                       transformers,

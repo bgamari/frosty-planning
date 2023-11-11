@@ -18,6 +18,7 @@ import Data.Bifunctor
 
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import System.FilePath
 
 import Control.Monad.Trans.State
 
@@ -126,6 +127,7 @@ mean xs = sum xs / realToFrac (length xs)
 
 main :: IO ()
 main = do
-    series <- readSeries "results"
+    let season = "2023-2024"
+    series <- readSeries ("results" </> season)
     print series
     print $ scoreSeries series

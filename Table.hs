@@ -16,6 +16,7 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Foldable
 import Data.Maybe
+import System.FilePath
 
 dayAnchor :: String -> T.Text
 dayAnchor day = "day-" <> T.pack day
@@ -23,24 +24,23 @@ dayAnchor day = "day-" <> T.pack day
 empty :: Html ()
 empty = return ()
 
-season = "2022/2023"
-
 type ScoredRaces = M.Map String (Races, [M.Map Sailor (DroppedOut Points)])
 
 main :: IO ()
 main = do
-    series <- readSeries "results"
+    let season = "2023-2024" :: String
+    series <- readSeries ("results" </> season)
     let scored :: ScoredRaces
         scored = M.intersectionWith (,) series (scoreSeries series)
 
     renderToFile "scores.html" $ doctypehtml_ $ do
-        header
+        header season
         body_ $ do
             h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
-            h2_ [classes_ ["subtitle", "is-2"], id_ "top"] $ season <> " Season"
+            h2_ [classes_ ["subtitle", "is-2"], id_ "top"] $ toHtml season <> " Season"
 
             p_ $ do
-                "Results for Frosty Fleet 9's " <> season <> " racing season are tabulated below. See "
+                "Results for Frosty Fleet 9's " <> toHtml season <> " racing season are tabulated below. See "
                 a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub "
                 "for machine-readable data, tabulation tools, and a discussion of scoring methodology."
             div_ $ do
@@ -85,9 +85,9 @@ isDroppedOut :: DroppedOut a -> Bool
 isDroppedOut (DroppedOut _) = True
 isDroppedOut (Scored _) = False
 
-header :: Html ()
-header = head_ $ do
-    title_ $ "Frosty Fleet 9 Results " <> season
+header :: String -> Html ()
+header season = head_ $ do
+    title_ $ "Frosty Fleet 9 Results " <> toHtml season
     link_ [rel_ "stylesheet", href_ "rankings.css"]
     link_ [rel_ "stylesheet", href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"]
     script_ [src_ "rankings.js"] empty
@@ -176,7 +176,7 @@ scoreSummaryTable scored =
                 td_ $ toHtml $ show $ S.size attendees
                 mconcat
                     [ td_ [classes_ classes]
-                      $ toHtml $ fromMaybe (error $ show sailor) $ M.lookup sailor dayPoints
+                      $ toHtml $ fromMaybe (error $ show (sailor, dayPoints)) $ M.lookup sailor dayPoints
                     | sailor <- allSailors
                     , let present :: Bool
                           present = sailor `S.member` attendees

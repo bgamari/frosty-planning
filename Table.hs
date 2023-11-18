@@ -16,6 +16,7 @@ import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Foldable
 import Data.Maybe
+import System.Environment
 import System.FilePath
 
 dayAnchor :: String -> T.Text
@@ -28,7 +29,7 @@ type ScoredRaces = M.Map String (Races, [M.Map Sailor (DroppedOut Points)])
 
 main :: IO ()
 main = do
-    let season = "2023-2024" :: String
+    [season] <- getArgs
     series <- readSeries ("results" </> season)
     let scored :: ScoredRaces
         scored = M.intersectionWith (,) series (scoreSeries series)

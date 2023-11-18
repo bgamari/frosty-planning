@@ -1,0 +1,22 @@
+name: deploy
+run-name: deploy to frosty.smart-cactus.org
+on: [push]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: haskell-actions/setup@v2
+        with:
+          ghc-version: '9.2.8'
+          cabal-version: '3.8'
+      - name: Populate key
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "smart-cactus.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILfpqA1cHoid0IOJVBnw1FrbTiR+8rutbPD48bF0TfXL" >> ~/.ssh/known_hosts
+          echo "$SSH_KEY" > key
+          chmod 600 key
+      - run: KEY=./key ./upload.sh
+

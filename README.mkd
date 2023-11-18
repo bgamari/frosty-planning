@@ -18,6 +18,27 @@ season is the sum of their race scores.
 Some days are scored with one or more drop-out races. In this case the competitor's
 $k$ worst-scoring races do not contribute to the day's score.
 
+## Score format
+
+The results of each race day is encoded as a directory of files named `R<n>`.
+Each file consists of a line beginning with the string `RC:` followed by a
+comma-separated set of names of the race committee for that race. Next come the
+names of the race's finishers, one per line. Names are case-insensitive.
+Finally, DNFs may be recorded on a line of the form `DNF: <name>`.
+
+For example,
+```
+RC: Lou
+Laura
+Les
+Larry
+DNF: Lewis
+```
+
+Finally, if the day should have a number of races dropped-out, the day's
+directory should contain a file named `dropouts` containing the number of
+drop-outs.
+
 ## Resources
 
 * [Current results](https://frosty.smart-cactus.org/)

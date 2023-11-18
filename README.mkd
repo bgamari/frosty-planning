@@ -18,6 +18,11 @@ season is the sum of their race scores.
 Some days are scored with one or more drop-out races. In this case the competitor's
 $k$ worst-scoring races do not contribute to the day's score.
 
+## Adding scores
+
+1. Add a new directory containing the day's scores to `results/$season`
+2. Run `cabal run results $season`
+
 ## Score format
 
 The results of each race day is encoded as a directory of files named `R<n>`.

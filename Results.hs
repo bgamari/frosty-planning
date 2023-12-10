@@ -12,6 +12,7 @@ module Results
     , mkSailor
     , sailorName
     , Ranking(..)
+    , appendRanking
     , Race(..)
     , Races(..)
     , raceFinishers
@@ -53,6 +54,9 @@ newtype Ranking a = Ranking { getRanking :: [a] }
     deriving newtype (NFData)
     deriving Applicative via ZipList
 
+appendRanking :: Ranking a -> Ranking a -> Ranking a
+appendRanking (Ranking a) (Ranking b) = Ranking (a <> b)
+
 data Race = Race { raceRanking :: Ranking Sailor
                  , raceRCs :: S.Set Sailor
                  , raceDNFs :: S.Set Sailor
@@ -73,27 +77,26 @@ racesParticipants :: [Race] -> S.Set Sailor
 racesParticipants = foldMap raceParticipants
 
 parseRace :: T.Text -> Race
-parseRace t
-  | Just rest <- "RC:" `T.stripPrefix` rcLine
-  = Race { raceRCs = S.fromList $ map mkSailor
-                     $ filter (not . T.null)
-                     $ T.splitOn "," $ T.strip rest
-         , raceRanking = Ranking
-            [ mkSailor l
-            | l <- ls
-            , not $ T.null l
-            , not $ "dnf:" `T.isPrefixOf` T.toLower l
-            ]
-         , raceDNFs = S.fromList
-            [ mkSailor name
-            | l <- ls
-            , not $ T.null l
-            , Just name <- pure $ "dnf:" `T.stripPrefix` T.toLower l
-            ]
-         }
-  | otherwise
-  = error "parseRace: invalid"
-  where rcLine:ls = T.lines t
+parseRace = foldl' f race0 . T.lines
+  where
+    race0 = Race (Ranking mempty) mempty mempty
+    f r l
+      | Just rest <- "rc:" `T.stripPrefix` l'
+      = r { raceRCs = raceRCs r <> S.fromList (parseSailors rest) }
+
+      | Just rest <- "dnf:" `T.stripPrefix` l'
+      = r { raceDNFs = raceDNFs r <> S.fromList (parseSailors rest) }
+
+      | otherwise
+      = r { raceRanking = raceRanking r `appendRanking` Ranking (parseSailors l') }
+      where
+        l' = T.toLower l
+
+        parseSailors :: T.Text -> [Sailor]
+        parseSailors = map mkSailor
+                     . filter (not . T.null)
+                     . map T.strip
+                     . T.splitOn ","
 
 data RaceParseError = RaceParseError { rpeException :: SomeException
                                      , rpeFile     :: FilePath

@@ -96,6 +96,8 @@ header season = head_ $ do
     meta_ [makeAttribute "property" "og:title", content_ "Frosty Fleet 9 Results"]
     meta_ [makeAttribute "property" "og:type", content_ "article"]
     meta_ [makeAttribute "property" "og:description", content_ "Season scores of the Frosty Fleet 9."]
+    meta_ [makeAttribute "property" "og:url", content_ "http://frosty.smart-cactus.org/logo.gif"]
+    meta_ [makeAttribute "property" "og:image", content_ "http://frosty.smart-cactus.org/"]
 
 -- | Summarize a particular day of races by position.
 rankingsTable :: M.Map String Race -> Html ()

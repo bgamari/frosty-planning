@@ -4,6 +4,7 @@
 module Main where
 
 import Lucid
+import Lucid.Base
 import Results
 import Scoring
 
@@ -92,6 +93,9 @@ header season = head_ $ do
     link_ [rel_ "stylesheet", href_ "rankings.css"]
     link_ [rel_ "stylesheet", href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"]
     script_ [src_ "rankings.js"] empty
+    meta_ [makeAttribute "property" "og:title", content_ "Frosty Fleet 9 Results"]
+    meta_ [makeAttribute "property" "og:type", content_ "article"]
+    meta_ [makeAttribute "property" "og:description", content_ "Season scores of the Frosty Fleet 9."]
 
 -- | Summarize a particular day of races by position.
 rankingsTable :: M.Map String Race -> Html ()

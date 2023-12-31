@@ -94,10 +94,15 @@ header season = head_ $ do
     link_ [rel_ "stylesheet", href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"]
     script_ [src_ "rankings.js"] empty
     meta_ [makeAttribute "property" "og:title", content_ "Frosty Fleet 9 Results"]
-    meta_ [makeAttribute "property" "og:type", content_ "article"]
+    meta_ [makeAttribute "property" "og:type", content_ "website"]
     meta_ [makeAttribute "property" "og:description", content_ "Season scores of the Frosty Fleet 9."]
-    meta_ [makeAttribute "property" "og:url", content_ "http://frosty.smart-cactus.org/logo.gif"]
-    meta_ [makeAttribute "property" "og:image", content_ "http://frosty.smart-cactus.org/"]
+    meta_ [makeAttribute "property" "og:url", content_ "https://frosty.smart-cactus.org/"]
+    meta_ [makeAttribute "property" "og:image:secure_url", content_ "https://frosty.smart-cactus.org/preview.png"]
+    meta_ [makeAttribute "property" "og:image:url", content_ "https://frosty.smart-cactus.org/preview.png"]
+    meta_ [makeAttribute "property" "og:image", content_ "https://frosty.smart-cactus.org/preview.png"]
+    meta_ [makeAttribute "property" "og:image:type", content_ "image/png"]
+    meta_ [makeAttribute "property" "og:image:width", content_ "1200"]
+    meta_ [makeAttribute "property" "og:image:height", content_ "630"]
 
 -- | Summarize a particular day of races by position.
 rankingsTable :: M.Map String Race -> Html ()

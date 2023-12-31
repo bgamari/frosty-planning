@@ -165,7 +165,7 @@ scoreSummaryTable :: ScoredRaces
 scoreSummaryTable scored =
     table_ [classes_ ["table", "is-striped", "is-hoverable", "score-summary"]] $ do
         thead_ $ do
-            tr_ $ mapM_ (th_ . toHtml) $ ["Day", "# Races", "Attendence"] ++ map sailor allSailors
+            tr_ $ mapM_ (th_ . toHtml) $ ["Day", "# Races", "Attendance"] ++ map sailor allSailors
         tbody_ $ do
             forM_ (M.toList scored) $ \(day, (rs, points)) -> tr_ $ do
                 th_ $ a_ [href_ ("#" <> dayAnchor day)] $ toHtml day

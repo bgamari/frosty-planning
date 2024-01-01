@@ -3,7 +3,7 @@
 set -e 
 
 sudo add-apt-repository universe
-apt-get install wkhtmltopdf
+sudo apt-get install wkhtmltopdf
 
 KEY="${KEY:-~/.ssh/frosty}"
 cabal run results 2023-2024

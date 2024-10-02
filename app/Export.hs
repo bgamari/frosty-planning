@@ -12,7 +12,7 @@ import Data.Time.Clock
 import Data.Time.LocalTime
 import qualified Data.Vector as V
 import qualified Data.Map.Strict as M
-import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Char8 as BL
 import qualified Data.ByteString.Char8 as BS
 import Data.Csv as Csv
 import GHC.Generics
@@ -24,10 +24,10 @@ portsmouth = Location
     }
 
 firstDay :: Day
-firstDay = fromGregorian 2022 11 6
+firstDay = fromGregorian 2024 11 3
 
 lastDay :: Day
-lastDay = fromGregorian 2023 06 1
+lastDay = fromGregorian 2025 06 1
 
 instance ToField Day where
     toField = BS.pack . show

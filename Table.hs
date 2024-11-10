@@ -35,7 +35,8 @@ main = do
     let scored :: ScoredRaces
         scored = M.intersectionWith (,) series (scoreSeries series)
 
-    renderToFile "scores.html" $ doctypehtml_ $ do
+    let out = "scores-" <> season <> ".html"
+    renderToFile out $ doctypehtml_ $ do
         header season
         body_ $ do
             h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
@@ -155,8 +156,8 @@ dayRankingsTable participants scores =
 
 
 racesRankings :: [Race] -> Ranking [Maybe Sailor]
-racesRankings = 
-    truncate . sequenceA . map (pad . raceRanking)
+racesRankings =
+    truncate . traverse (pad . raceRanking)
   where
     pad (Ranking xs) = Ranking (fmap Just xs ++ repeat Nothing)
     truncate (Ranking xs) = Ranking $ takeWhile (not . all isNothing) xs

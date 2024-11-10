@@ -25,6 +25,7 @@ import Control.Monad.Trans.State
 import MultiSet
 import qualified MultiSet as MS
 import Results
+import System.Environment (getArgs)
 
 newtype Points = Points Float
     deriving (Show, Eq, Ord)
@@ -127,7 +128,7 @@ mean xs = sum xs / realToFrac (length xs)
 
 main :: IO ()
 main = do
-    let season = "2023-2024"
+    [season] <- getArgs
     series <- readSeries ("results" </> season)
     print series
     print $ scoreSeries series

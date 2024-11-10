@@ -96,6 +96,7 @@ header season = head_ $ do
     link_ [rel_ "stylesheet", href_ "rankings.css"]
     link_ [rel_ "stylesheet", href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"]
     script_ [src_ "rankings.js"] empty
+    meta_ [makeAttribute "name" "viewport", content_ "width=device-width, initial-scale=1"]
     meta_ [makeAttribute "property" "og:title", content_ "Frosty Fleet 9 Results"]
     meta_ [makeAttribute "property" "og:type", content_ "website"]
     meta_ [makeAttribute "property" "og:description", content_ "Season scores of the Frosty Fleet 9."]

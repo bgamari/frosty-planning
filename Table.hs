@@ -43,11 +43,11 @@ main = do
             h2_ [classes_ ["subtitle", "is-2"], id_ "top"] $ toHtml season <> " Season"
 
             p_ $ do
-                "Results for Frosty Fleet 9's " <> toHtml season <> " racing season are tabulated below. See the"
+                "Results for Frosty Fleet 9's " <> toHtml season <> " racing season are tabulated below. See the "
                 a_ [href_ "/archive.html"] "archive"
-                "for previous years' results and"
-                a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub "
-                "for machine-readable data, tabulation tools, and a discussion of scoring methodology."
+                " for previous years' results and "
+                a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub"
+                " for machine-readable data, tabulation tools, and a discussion of scoring methodology."
             div_ $ do
                 i_ "Hint: "
                 span_ "Click on a sailor's name to highlight occurrences."

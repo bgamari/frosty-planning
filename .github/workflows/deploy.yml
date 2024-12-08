@@ -13,9 +13,10 @@ jobs:
       - name: Populate key
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}
+          HOST_KEY: "smart-cactus.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII0NFIh4VqLX5EmQ5qRIHmcJ24Y50/xm9tTeOTcp7SZr"
         run: |
           mkdir -p ~/.ssh
-          echo "smart-cactus.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILfpqA1cHoid0IOJVBnw1FrbTiR+8rutbPD48bF0TfXL" >> ~/.ssh/known_hosts
+          echo "$HOST_KEY" >> ~/.ssh/known_hosts
           echo "$SSH_KEY" > key
           chmod 600 key
       - run: KEY=./key ./upload.sh

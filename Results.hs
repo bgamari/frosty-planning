@@ -85,7 +85,7 @@ parseRace = foldl' f race0 . T.lines
       = r { raceRCs = raceRCs r <> S.fromList (parseSailors rest) }
 
       | Just rest <- "dnc:" `T.stripPrefix` l'
-      = r { raceDNFs = raceDNFs r <> S.fromList (parseSailors rest) }
+      = r
 
       | Just rest <- "dnf:" `T.stripPrefix` l'
       = r { raceDNFs = raceDNFs r <> S.fromList (parseSailors rest) }

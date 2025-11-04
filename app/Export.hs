@@ -24,10 +24,10 @@ portsmouth = Location
     }
 
 firstDay :: Day
-firstDay = fromGregorian 2024 11 3
+firstDay = fromGregorian 2025 11 2
 
 lastDay :: Day
-lastDay = fromGregorian 2025 06 1
+lastDay = fromGregorian 2026 06 1
 
 instance ToField Day where
     toField = BS.pack . show

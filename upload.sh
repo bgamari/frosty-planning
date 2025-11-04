@@ -2,7 +2,7 @@
 
 set -e
 
-current_season="2024-2025"
+current_season="2025-2026"
 seasons="$(ls ./results)"
 
 if which apt-get; then

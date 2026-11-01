@@ -18,6 +18,11 @@ season is the sum of their race scores.
 Some days are scored with one or more drop-out races. In this case the competitor's
 $k$ worst-scoring races do not contribute to the day's score.
 
+Ties are broken as described in Appendix A8 of the Racing Rules of Sailing:
+first by comparing the tied competitors' scores from best to worst, excluding
+drop-out races, and then by comparing their scores from the last race to the
+first.
+
 ## Adding scores
 
 1. Add a new directory containing the day's scores to `results/$season`

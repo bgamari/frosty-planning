@@ -6,12 +6,14 @@ module Scoring
     ( Points(..)
     , DroppedOut(..)
     , getScored
+    , totalScore
+    , rankSailors
     , scoreSeries
     ) where
 
 import Data.Foldable
 import Data.Maybe
-import Data.List (sort)
+import Data.List (sort, sortOn)
 import Data.Tuple (swap)
 import Data.Coerce
 import Data.Bifunctor
@@ -115,6 +117,32 @@ testComputeDropouts = print $ computeDropouts dropouts scores
 
 getScored :: DroppedOut Points -> Points
 getScored = getScored' (Points 0)
+
+-- | The score of a race, regardless of whether it was dropped out.
+rawScore :: DroppedOut a -> a
+rawScore (DroppedOut s) = s
+rawScore (Scored s) = s
+
+-- | Each sailor's total score over the given races.
+totalScore :: [M.Map Sailor (DroppedOut Points)] -> M.Map Sailor Points
+totalScore = M.unionsWith (<>) . fmap (fmap getScored)
+
+-- | Rank sailors over the given chronologically-ordered races, best first.
+--
+-- Ties are broken per Appendix A8 of the Racing Rules of Sailing: first by
+-- comparing the sailors' scores from best to worst, excluding dropped-out
+-- races; then by comparing their scores from the last race to the first,
+-- including dropped-out races.
+rankSailors :: [M.Map Sailor (DroppedOut Points)] -> [Sailor]
+rankSailors races = sortOn key $ M.keys totals
+  where
+    totals = totalScore races
+    key sailor =
+        ( totals M.! sailor
+        , sort [ pts | Scored pts <- sailorRaces ]
+        , reverse $ map rawScore sailorRaces
+        )
+      where sailorRaces = mapMaybe (M.lookup sailor) races
 
 getScored' :: a -> DroppedOut a -> a
 getScored' z (DroppedOut _) = z

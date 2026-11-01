@@ -8,9 +8,7 @@ import Results
 import Scoring
 
 import Control.Monad
-import Data.List (dropWhileEnd, sort, sortBy)
-import Data.Tuple (swap)
-import Data.Ord (comparing)
+import Data.List (dropWhileEnd)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -137,7 +135,7 @@ dayRankingsTable participants scores =
     totals = totalScore scores `M.restrictKeys` participants
 
     ranking :: [Sailor]
-    ranking = map snd $ sort $ map swap $ M.toList totals
+    ranking = filter (`S.member` participants) $ rankSailors scores
 
     sailorRow :: Sailor -> Html ()
     sailorRow s = tr_ $ do
@@ -210,11 +208,11 @@ scoreSummaryTable scored =
 
   where
     allSailors :: [Sailor]
-    allSailors = map fst $ sortBy (comparing snd) $ M.toList totals
+    allSailors = rankSailors allRaces
 
     totals :: M.Map Sailor Points
-    totals = totalScore $ concatMap snd $ M.elems scored
+    totals = totalScore allRaces
 
-totalScore :: [M.Map Sailor (DroppedOut Points)] -> M.Map Sailor Points
-totalScore = M.unionsWith (<>) . fmap (fmap getScored)
+    allRaces :: [M.Map Sailor (DroppedOut Points)]
+    allRaces = concatMap snd $ M.elems scored
 

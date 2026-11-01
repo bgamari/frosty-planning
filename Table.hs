@@ -183,7 +183,7 @@ scoreSummaryTable scored =
             forM_ (M.toList scored) $ \(day, (rs, points)) -> tr_ $ do
                 th_ $ a_ [href_ ("#" <> dayAnchor day)] $ toHtml day
                 let dayPoints :: M.Map Sailor Points
-                    dayPoints = M.unionsWith (<>) $ fmap (fmap getScored) points
+                    dayPoints = totalScore points
                     attendees :: S.Set Sailor
                     attendees = racesParticipants (races rs)
                 td_ $ toHtml $ show $ length $ races rs
@@ -213,16 +213,8 @@ scoreSummaryTable scored =
     allSailors = map fst $ sortBy (comparing snd) $ M.toList totals
 
     totals :: M.Map Sailor Points
-    totals = M.unionsWith (<>)
-        $ fmap (fmap getScored)
-        $ concat
-        $ map snd
-        $ M.elems scored
+    totals = totalScore $ concatMap snd $ M.elems scored
 
 totalScore :: [M.Map Sailor (DroppedOut Points)] -> M.Map Sailor Points
-totalScore races = M.fromListWith (<>)
-    [ (sailor, getScored pts)
-    | race <- races
-    , (sailor, pts) <- M.toList race
-    ]
+totalScore = M.unionsWith (<>) . fmap (fmap getScored)
 

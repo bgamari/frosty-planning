@@ -144,10 +144,9 @@ dayRankingsTable participants scores =
         td_ $ sailor s
         td_ [classes_ []] $ toHtml $ totals M.! s
         sequence_
-            [ case M.lookup s race of
-                Just (DroppedOut s) -> td_ [classes_ ["dropout"]] $ toHtml s
-                Just (Scored s)     -> td_ $ toHtml s
-                Nothing             -> td_ "dnf"
+            [ case race M.! s of
+                DroppedOut s -> td_ [classes_ ["dropout"]] $ toHtml s
+                Scored s     -> td_ $ toHtml s
             | race <- scores
             ]
 

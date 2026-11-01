@@ -10,7 +10,7 @@ extra-source-files: CHANGELOG.md
 
 executable frosty-planning-export
     main-is:          Export.hs
-    build-depends:    base >=4.15 && <4.20,
+    build-depends:    base >=4.15 && <4.22,
                       time,
                       solar,
                       bytestring,

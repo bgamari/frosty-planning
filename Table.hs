@@ -65,9 +65,9 @@ main = do
                          toHtml $ show $ S.size participants
                          " sailors participated this day."
                          when (dropouts rs > 0) $ do
-                            "This day is scored with "
+                            " This day is scored with "
                             toHtml $ show (dropouts rs)
-                            " dropout races."
+                            if dropouts rs == 1 then " dropout race." else " dropout races."
 
                      h4_ [classes_ ["subtitle", "is-4"]] "By position"
                      rankingsTable $ races rs

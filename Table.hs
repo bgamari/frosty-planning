@@ -200,14 +200,14 @@ scoreSummaryTable scored =
                             | not present = ["has-text-grey-light"]
                             | otherwise = []
                     ]
-            tfoot_ $ tr_ $ do
-                th_ "total"
-                td_ $ toHtml $ show $ sum $ fmap (length . races . fst) scored
-                td_ ""
-                sequenceA_
-                    [ td_ $ toHtml $ totals M.! sailor
-                    | sailor <- allSailors
-                    ]
+        tfoot_ $ tr_ $ do
+            th_ "total"
+            td_ $ toHtml $ show $ sum $ fmap (length . races . fst) scored
+            td_ ""
+            sequenceA_
+                [ td_ $ toHtml $ totals M.! sailor
+                | sailor <- allSailors
+                ]
 
   where
     allSailors :: [Sailor]

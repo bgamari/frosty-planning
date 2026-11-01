@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ParallelListComp #-}
 
 module Main where
 
@@ -70,12 +69,7 @@ main = do
                             " dropout races."
 
                      h4_ [classes_ ["subtitle", "is-4"]] "By position"
-                     rankingsTable
-                        $ M.fromList
-                          [ ("Race " ++ show i, race)
-                          | i <- [1..]
-                          | race <- races rs
-                          ]
+                     rankingsTable $ races rs
 
                      h4_ [classes_ ["subtitle", "is-4"]] "By sailor"
                      when (any (any isDroppedOut) scores) $ div_ $ do
@@ -109,11 +103,11 @@ header season = head_ $ do
     meta_ [makeAttribute "property" "og:image:height", content_ "630"]
 
 -- | Summarize a particular day of races by position.
-rankingsTable :: M.Map String Race -> Html ()
+rankingsTable :: [Race] -> Html ()
 rankingsTable races =
     table_ [classes_ ["table", "is-striped", "is-hoverable", "race-rankings"]] $ do
         thead_ $ do
-            tr_ $ mapM_ (th_ . toHtml) $ ["Position"] ++ M.keys races
+            tr_ $ mapM_ (th_ . toHtml) $ "Position" : ["Race " ++ show i | (i,_) <- zip [1 :: Int ..] races]
             tr_ $ do
                 th_ "RC"
                 mapM_ (td_ . ul_ . foldMap (li_ . sailor) . S.toList . raceRCs) races
@@ -125,8 +119,7 @@ rankingsTable races =
         tbody_
             $ mapM_ tr_
             $ zipWith mkRow [1..]
-            $ getRanking $ racesRankings
-            $ M.elems races
+            $ getRanking $ racesRankings races
 
 -- | Summarize a particular day of races by sailor.
 dayRankingsTable :: S.Set Sailor -> [M.Map Sailor (DroppedOut Points)] -> Html ()

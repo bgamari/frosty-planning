@@ -186,7 +186,7 @@ scoreSummaryTable scored =
                 let dayPoints :: M.Map Sailor Points
                     dayPoints = M.unionsWith (<>) $ fmap (fmap getScored) points
                     attendees :: S.Set Sailor
-                    attendees = foldMap raceFinishers (races rs)
+                    attendees = racesParticipants (races rs)
                 td_ $ toHtml $ show $ length $ races rs
                 td_ $ toHtml $ show $ S.size attendees
                 mconcat

@@ -8,7 +8,7 @@ import Results
 import Scoring
 
 import Control.Monad
-import Data.List (intersperse, sort, sortBy)
+import Data.List (dropWhileEnd, intersperse, sort, sortBy)
 import Data.Tuple (swap)
 import Data.Ord (comparing)
 import qualified Data.Map.Strict as M
@@ -18,6 +18,7 @@ import Data.Foldable
 import Data.Maybe
 import System.Environment
 import System.FilePath
+import Text.Printf (printf)
 
 dayAnchor :: String -> T.Text
 dayAnchor day = "day-" <> T.pack day
@@ -164,8 +165,13 @@ sailor s =
     $ toHtml $ sailorName s
 
 instance ToHtml Points where
-    toHtml (Points n) = toHtml $ show $ round n
+    toHtml (Points n) = toHtml $ showScore n
     toHtmlRaw = toHtml
+
+-- | Show a score to two decimal places, omitting any trailing zeros. Scores
+-- are fractional only by way of RC averages.
+showScore :: Float -> String
+showScore = dropWhileEnd (== '.') . dropWhileEnd (== '0') . printf "%.2f"
 
 -- | Summary of sailors' per-day scores.
 scoreSummaryTable :: ScoredRaces

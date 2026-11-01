@@ -8,7 +8,7 @@ import Results
 import Scoring
 
 import Control.Monad
-import Data.List (dropWhileEnd, intersperse, sort, sortBy)
+import Data.List (dropWhileEnd, sort, sortBy)
 import Data.Tuple (swap)
 import Data.Ord (comparing)
 import qualified Data.Map.Strict as M

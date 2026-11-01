@@ -143,10 +143,12 @@ readRaces dir = do
     dropouts <- readDropouts dir
     notes <- maybe "" id <$> readIfExists (dir </> "notes")
     races <- mapM (readRace . (dir </>))
-        $ filter (`notElem` specialFiles) (sort raceFiles)
+        $ filter (`notElem` specialFiles) (sortOn raceOrder raceFiles)
     return $ Races { notes, races, dropouts }
   where
     specialFiles = ["dropouts", "notes"]
+    -- Order numerically, ensuring that R2 comes before R10.
+    raceOrder fname = (length fname, fname)
 
 readSeries :: FilePath -> IO (M.Map String Races)
 readSeries resultsDir = do

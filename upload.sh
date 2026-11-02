@@ -15,12 +15,16 @@ for season in $seasons; do
     cabal run results $season
 done
 
-echo "Generating preview..."
-wkhtmltoimage --enable-local-file-access --width 1200 --height 630 scores-$current_season.html preview.png
+echo "Generating previews..."
+for page in scores-*.html; do
+    wkhtmltoimage --quiet --quality 10 --enable-local-file-access --width 1200 --height 630 "$page" "${page%.html}.png"
+done
+# Used by archive.html
+cp scores-$current_season.png preview.png
 
 echo "Uploading..."
 KEY="${KEY:-~/.ssh/frosty}"
 dest="frosty@smart-cactus.org:/var/www/frosty.smart-cactus.org"
 scp -i $KEY scores-$current_season.html "$dest/index.html"
-scp -i $KEY scores-*.html "$dest"
+scp -i $KEY scores-*.html scores-*.png "$dest"
 scp -i $KEY archive.html rankings.js rankings.css preview.png "$dest"

@@ -18,8 +18,13 @@ import System.Environment
 import System.FilePath
 import Text.Printf (printf)
 
-dayAnchor :: String -> T.Text
-dayAnchor day = "day-" <> T.pack day
+-- | The page summarizing a season.
+seasonFile :: String -> FilePath
+seasonFile season = "scores-" <> season <> ".html"
+
+-- | The page describing a day of racing.
+dayFile :: String -> String -> FilePath
+dayFile season day = "scores-" <> season <> "-" <> day <> ".html"
 
 empty :: Html ()
 empty = return ()
@@ -33,73 +38,93 @@ main = do
     let scored :: ScoredRaces
         scored = M.intersectionWith (,) series (scoreSeries series)
 
-    let out = "scores-" <> season <> ".html"
-    renderToFile out $ doctypehtml_ $ do
-        header season
-        body_ $ do
-            h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
-            h2_ [classes_ ["subtitle", "is-2"], id_ "top"] $ toHtml season <> " Season"
+    renderToFile (seasonFile season) $ seasonPage season scored
+    forM_ (M.toList scored) $ \(day, (rs, scores)) ->
+        renderToFile (dayFile season day) $ dayPage season day rs scores
 
-            p_ $ do
-                "Results for Frosty Fleet 9's " <> toHtml season <> " racing season are tabulated below. See the "
-                a_ [href_ "/archive.html"] "archive"
-                " for previous years' results and "
-                a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub"
-                " for machine-readable data, tabulation tools, and a discussion of scoring methodology."
-            div_ $ do
-                i_ "Hint: "
-                span_ "Click on a sailor's name to highlight occurrences."
-            div_ [classes_ ["mb-4"]] empty
-            scoreSummaryTable scored
+-- | Summary of a season, linking to its 'dayPage's.
+seasonPage :: String -> ScoredRaces -> Html ()
+seasonPage season scored = doctypehtml_ $ do
+    header season (seasonFile season)
+    body_ $ do
+        h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
+        h2_ [classes_ ["subtitle", "is-2"]] $ toHtml season <> " Season"
 
-            h2_ [classes_ ["subtitle", "is-2"]] "Results by Race Day"
-            mconcat
-                [ do h3_ [id_ (dayAnchor day), classes_ ["subtitle", "is-3"]] $ do
-                         span_ $ toHtml day
-                         span_ [classes_ ["header-link"]] $ "[" <> a_ [href_ "#top"] "return to top" <> "]"
-                     let participants = racesParticipants $ races rs
-                     div_ $ toHtml $ notes rs
-                     div_ $ do
-                         toHtml $ show $ S.size participants
-                         " sailors participated this day."
-                         when (dropouts rs > 0) $ do
-                            " This day is scored with "
-                            toHtml $ show (dropouts rs)
-                            if dropouts rs == 1 then " dropout race." else " dropout races."
+        p_ $ do
+            "Results for Frosty Fleet 9's " <> toHtml season <> " racing season are tabulated below. See the "
+            a_ [href_ "/archive.html"] "archive"
+            " for previous years' results and "
+            a_ [href_ "https://github.com/bgamari/frosty-planning"] "GitHub"
+            " for machine-readable data, tabulation tools, and a discussion of scoring methodology."
+        sailorHint
+        div_ [classes_ ["mb-4"]] empty
+        scoreSummaryTable season scored
 
-                     h4_ [classes_ ["subtitle", "is-4"]] "By position"
-                     rankingsTable $ races rs
+-- | Results of a single day of racing.
+dayPage :: String -> String -> Races -> [M.Map Sailor (DroppedOut Points)] -> Html ()
+dayPage season day rs scores = doctypehtml_ $ do
+    header (season <> " " <> day) (dayFile season day)
+    body_ $ do
+        h1_ [classes_ ["title", "is-1"]] "Frosty Fleet 9 Results"
+        h2_ [classes_ ["subtitle", "is-2"]] $ do
+            span_ $ toHtml day
+            span_ [classes_ ["header-link"]] $
+                "[" <> a_ [href_ (T.pack $ seasonFile season)] ("return to " <> toHtml season <> " season") <> "]"
+        let participants = racesParticipants $ races rs
+        div_ $ toHtml $ notes rs
+        div_ $ do
+            toHtml $ show $ S.size participants
+            " sailors participated this day."
+            when (dropouts rs > 0) $ do
+                " This day is scored with "
+                toHtml $ show (dropouts rs)
+                if dropouts rs == 1 then " dropout race." else " dropout races."
+        sailorHint
 
-                     h4_ [classes_ ["subtitle", "is-4"]] "By sailor"
-                     when (any (any isDroppedOut) scores) $ div_ $ do
-                         i_ "Hint: "
-                         span_ [classes_ ["dropout"], style_ "padding: 0.2em; border-radius: 0.5em;"] "Red highlighting"
-                         " denotes dropped-out score"
-                     dayRankingsTable participants scores
-                | (day, (rs, scores)) <- M.toList scored
-                ]
+        h4_ [classes_ ["subtitle", "is-4"]] "By position"
+        rankingsTable $ races rs
+
+        h4_ [classes_ ["subtitle", "is-4"]] "By sailor"
+        when (any (any isDroppedOut) scores) $ div_ $ do
+            i_ "Hint: "
+            span_ [classes_ ["dropout"], style_ "padding: 0.2em; border-radius: 0.5em;"] "Red highlighting"
+            " denotes dropped-out score"
+        dayRankingsTable participants scores
+
+sailorHint :: Html ()
+sailorHint = div_ $ do
+    i_ "Hint: "
+    span_ "Click on a sailor's name to highlight occurrences."
 
 isDroppedOut :: DroppedOut a -> Bool
 isDroppedOut (DroppedOut _) = True
 isDroppedOut (Scored _) = False
 
-header :: String -> Html ()
-header season = head_ $ do
-    title_ $ "Frosty Fleet 9 Results " <> toHtml season
+-- | The preview image of a page, generated by @upload.sh@.
+previewFile :: FilePath -> FilePath
+previewFile page = replaceExtension page "png"
+
+-- | The @<head>@ of the page with the given title and file name.
+header :: String -> FilePath -> Html ()
+header title page = head_ $ do
+    title_ $ "Frosty Fleet 9 Results " <> toHtml title
     link_ [rel_ "stylesheet", href_ "rankings.css"]
     link_ [rel_ "stylesheet", href_ "https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"]
     script_ [src_ "rankings.js"] empty
     meta_ [makeAttribute "name" "viewport", content_ "width=device-width, initial-scale=1"]
-    meta_ [makeAttribute "property" "og:title", content_ "Frosty Fleet 9 Results"]
+    meta_ [makeAttribute "property" "og:title", content_ $ "Frosty Fleet 9 Results " <> T.pack title]
     meta_ [makeAttribute "property" "og:type", content_ "website"]
-    meta_ [makeAttribute "property" "og:description", content_ "Season scores of the Frosty Fleet 9."]
-    meta_ [makeAttribute "property" "og:url", content_ "https://frosty.smart-cactus.org/"]
-    meta_ [makeAttribute "property" "og:image:secure_url", content_ "https://frosty.smart-cactus.org/preview.png"]
-    meta_ [makeAttribute "property" "og:image:url", content_ "https://frosty.smart-cactus.org/preview.png"]
-    meta_ [makeAttribute "property" "og:image", content_ "https://frosty.smart-cactus.org/preview.png"]
+    meta_ [makeAttribute "property" "og:description", content_ "Race results of the Frosty Fleet 9."]
+    meta_ [makeAttribute "property" "og:url", content_ $ siteUrl page]
+    meta_ [makeAttribute "property" "og:image:secure_url", content_ preview]
+    meta_ [makeAttribute "property" "og:image:url", content_ preview]
+    meta_ [makeAttribute "property" "og:image", content_ preview]
     meta_ [makeAttribute "property" "og:image:type", content_ "image/png"]
     meta_ [makeAttribute "property" "og:image:width", content_ "1200"]
     meta_ [makeAttribute "property" "og:image:height", content_ "630"]
+  where
+    preview = siteUrl $ previewFile page
+    siteUrl path = "https://frosty.smart-cactus.org/" <> T.pack path
 
 -- | Summarize a particular day of races by position.
 rankingsTable :: [Race] -> Html ()
@@ -171,15 +196,16 @@ showScore :: Float -> String
 showScore = dropWhileEnd (== '.') . dropWhileEnd (== '0') . printf "%.2f"
 
 -- | Summary of sailors' per-day scores.
-scoreSummaryTable :: ScoredRaces
+scoreSummaryTable :: String
+                  -> ScoredRaces
                   -> Html ()
-scoreSummaryTable scored =
+scoreSummaryTable season scored =
     table_ [classes_ ["table", "is-striped", "is-hoverable", "score-summary"]] $ do
         thead_ $ do
             tr_ $ mapM_ (th_ . toHtml) $ ["Day", "# Races", "Attendance"] ++ map sailor allSailors
         tbody_ $ do
             forM_ (M.toList scored) $ \(day, (rs, points)) -> tr_ $ do
-                th_ $ a_ [href_ ("#" <> dayAnchor day)] $ toHtml day
+                th_ $ a_ [href_ (T.pack $ dayFile season day)] $ toHtml day
                 let dayPoints :: M.Map Sailor Points
                     dayPoints = totalScore points
                     attendees :: S.Set Sailor

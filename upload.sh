@@ -5,20 +5,20 @@ set -e
 current_season="2026-2027"
 seasons="$(ls ./results)"
 
-if which apt-get; then
-    sudo add-apt-repository universe
-    sudo apt-get install wkhtmltopdf
-fi
-
 for season in $seasons; do
     echo "Processing $season..."
     cabal run results $season
 done
 
 echo "Generating previews..."
+chrome="$(command -v google-chrome || command -v chromium)"
+profile="$(mktemp -d)"
 for page in scores-*.html; do
-    wkhtmltoimage --quiet --quality 10 --enable-local-file-access --width 1200 --height 630 "$page" "${page%.html}.png"
+    "$chrome" --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
+        --user-data-dir="$profile" --window-size=1200,630 \
+        --screenshot="$PWD/${page%.html}.png" "file://$PWD/$page"
 done
+rm -rf "$profile"
 # Used by archive.html
 cp scores-$current_season.png preview.png
 

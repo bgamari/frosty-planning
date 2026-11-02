@@ -6,10 +6,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: haskell-actions/setup@v2
+      - uses: haskell-actions/setup@v2.12.1
         with:
           ghc-version: '9.2.8'
-          cabal-version: '3.8'
+          cabal-version: '3.18.1.0'
       - name: Populate key
         env:
           SSH_KEY: ${{ secrets.SSH_KEY }}

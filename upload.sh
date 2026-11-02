@@ -14,9 +14,17 @@ echo "Generating previews..."
 chrome="$(command -v google-chrome || command -v chromium)"
 profile="$(mktemp -d)"
 for page in scores-*.html; do
+    png="${page%.html}.png"
+    rm -f "$png"
+    # --log-level=3 silences errors about the lack of a D-Bus session.
     "$chrome" --headless=new --no-sandbox --disable-gpu --hide-scrollbars \
-        --user-data-dir="$profile" --window-size=1200,630 \
-        --screenshot="$PWD/${page%.html}.png" "file://$PWD/$page"
+        --log-level=3 --user-data-dir="$profile" --window-size=1200,630 \
+        --screenshot="$PWD/$png" "file://$PWD/$page"
+    # Chrome exits successfully even if the screenshot could not be written.
+    if [ ! -s "$png" ]; then
+        echo "Failed to render $page" >&2
+        exit 1
+    fi
 done
 rm -rf "$profile"
 # Used by archive.html
